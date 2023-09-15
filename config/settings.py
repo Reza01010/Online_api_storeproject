@@ -25,7 +25,6 @@ SECRET_KEY = 'django-insecure-i+m94m-2#jwfld=xklm8o4@-r7er3ag!hg!awy4f*tlvo1m5cv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -70,13 +69,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost',]
+
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
 
@@ -121,3 +126,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CELERY_BROKER_URL = 'amqp://guest:guest@rabbit:5672//'
+CELERY_RESULT_BACKEND = 'rpc://'
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

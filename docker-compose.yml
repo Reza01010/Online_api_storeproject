@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    command: python /code/manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - broker
+    environment:
+      - "DJANGO_SECRET_KEY=${DOCKER_COMPOSE_DJANGO_SECRET_KEY}"
+      - "DJANGO_DEBUG=${DOCKER_COMPOSE_DJANGO_DEBUG}"
+      - "DJANGO_ZARINPAL_MERCHANT_ID=${DOCKER_COMPOSE_DJANGO_ZARINPAL_MERCHANT_ID}"
+
+  db:
+    image: postgres:14
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+  broker:
+    hostname: rabbit
+    image: rabbitmq:3.8-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    
+    
+  worker:
+    build: .
+    command: ["celery","-A","config", "worker", "-l", "INFO"]
+    volumes:
+      - .:/code
+    depends_on:
+      - broker
+      - db
+    environment:
+      - CELERY_BROKER_USER=guest
+      - CELERY_BROKER_PASSWORD=guest
+      - "DJANGO_SECRET_KEY=${DOCKER_COMPOSE_DJANGO_SECRET_KEY}"
+      - "DJANGO_DEBUG=${DOCKER_COMPOSE_DJANGO_DEBUG}"
+      - "DJANGO_ZARINPAL_MERCHANT_ID=${DOCKER_COMPOSE_DJANGO_ZARINPAL_MERCHANT_ID}"
+        
