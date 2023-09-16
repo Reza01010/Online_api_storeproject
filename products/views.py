@@ -141,29 +141,6 @@ def contact_us_view(request):
         return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST','GET'])
-@permission_classes([IsAuthenticated])
-def my_account_view(request):
-    form = ChangePasswordForm()
-    acco_form = Myaccountfrom()
-    if request.method == 'POST':
-        acco_form = Myaccountfrom(request.POST)
-        if acco_form.is_valid():
-            if acco_form.cleaned_data['firstname']:
-                request.user.first_name = acco_form.cleaned_data['firstname']
-            if acco_form.cleaned_data['lastname']:
-                request.user.last_name = acco_form.cleaned_data['lastname']
-            if acco_form.cleaned_data['email']:
-                request.user.email = acco_form.cleaned_data['email']
-            if acco_form.cleaned_data['username']:
-                request.user.username = acco_form.cleaned_data['username']
-            request.user.save()
-    if request.user.is_authenticated:
-        favorite_ = request.user.favorites.all()
-    o = Order.objects.filter(user=request.user)
-
-    return render(request, 'my_account.html',
-                  context={'list_fe': favorite_, 'order': o, 'form': form, "acco_form": acco_form})
 
 
 
@@ -187,15 +164,34 @@ def my_account_view(request):
         return Response(acco_form.errors, status=status.HTTP_400_BAD_REQUEST)
     if request.method == 'GET':
         favorite_ = request.user.favorites.all()
-        serializerfa = serializers.serialize(favorite_, many=True)
+        serializerfa = serializers.serialize('json', favorite_)
         serialized_data_fa = serializerfa.data
         o = Order.objects.filter(user=request.user)
-        serializero = serializers.serialize(o, many=True)
+        serializero = serializers.serialize('json', o)
         serialized_data_o = serializero.data
-    # return JsonResponse((serialized_data_fa,serialized_data_o), safe=False, status=status.HTTP_200_OK)
+    return JsonResponse({'listfe': serialized_data_fa, 'order':serialized_data_o}, safe=False, status=status.HTTP_200_OK)
 
+# ---------------------
+class MyAccountAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        favorite_ = request.user.favorites.all()
+        o = Order.objects.filter(user=request.user)
+        context = {'listfe': favorite_, 'order': o}
+        return Response(context)
 
+    def post(self, request):
+        serializer = MyAccountSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            user.first_name = serializer.validated_data.get('first_name', '')
+            user.last_name = serializer.validated_data.get('last_name', '')
+            user.email = serializer.validated_data.get('email', '')
+            user.username = serializer.validated_data.get('username', '')
+            user.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
 

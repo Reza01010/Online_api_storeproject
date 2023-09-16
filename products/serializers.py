@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Product, Comment, UserFavorite, Contact_us
-
+from orders.models import Order,OrderItem
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,5 +33,15 @@ class MyAccountSerializer(serializers.Serializer):
     username = serializers.CharField(required=False)
 
 
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'quantity', 'price']
 
 
+class OrderSerializer_e(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+
+    class Meta:
+        model = Order
+        exclude = ['zarinpal_authority', 'zarinpal_ref_id', 'zarinpal_data']
