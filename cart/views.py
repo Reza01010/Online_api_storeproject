@@ -1,53 +1,77 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-from django.shortcuts import get_object_or_404
 
+from products.serializers import CartSerializer
 from .cart import Cart
 from products.models import Product
 from .forms import AddToCartProductForm
+from rest_framework import status
 
 
-@api_view(['GET'])
+def geet_Product_object(pk):
+    try:
+        return Product.objects.get(pk=pk)
+    except:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes(BasicAuthentication)
 @permission_classes([IsAuthenticated])
 def cart_detail_view(request):
-    cart = Cart(request)
-    for item in cart:
-        item['product_update_quantity_form'] = AddToCartProductForm(initial={
-            'quantity': item['quantity'], 'inplace': True
-        })
-    return Response({'cart': cart}, status=HTTP_200_OK)
+    if request.method == 'GET':
+        cart = CartSerializer(Cart(request))
+        return Response({'cart': cart}, status=HTTP_200_OK)
+
+    elif request.method == 'POST':
+        serializes = CartSerializer(data=request.data)
+        if serializes.is_valid():
+            cleaned_data = serializes.validated_data
+            quantity = cleaned_data['quantity']
+            product = geet_Product_object(pk=int(cleaned_data['product']))
+            cart = Cart(request)
+            cart.add(product, quantity, Bool_to_replace=True)
+            cart = CartSerializer(Cart(request))
+            return Response({'cart': cart}, status=HTTP_200_OK)
+        else:
+            return Response(serializes.errors, status=HTTP_400_BAD_REQUEST)
+    return Response(status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
+@authentication_classes(BasicAuthentication)
 @permission_classes([IsAuthenticated])
-def add_to_cart_view(request, product_id):
-    cart = Cart(request)
-
-    product = get_object_or_404(Product, id=product_id)
-    form = AddToCartProductForm(request.data)
-
-    if form.is_valid():
-        cleaned_data = form.cleaned_data
-        quantity = cleaned_data['quantity']
-        cart.add(product, quantity, replase_current_quantity=cleaned_data['inplace'])
-        return Response(status=HTTP_200_OK)
-    else:
-        return Response(form.errors, status=HTTP_400_BAD_REQUEST)
+def add_to_cart_view(request):
+    if request.method == 'POST':
+        serializes = CartSerializer(data=request.data)
+        if serializes.is_valid():
+            cleaned_data = serializes.validated_data
+            quantity = cleaned_data['quantity']
+            product = geet_Product_object(pk=int(cleaned_data['product']))
+            cart = Cart(request)
+            cart.add(product, quantity, Bool_to_replace=False)
+            cart = CartSerializer(Cart(request))
+            return Response({'cart': cart}, status=HTTP_200_OK)
+        else:
+            return Response(serializes.errors, status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
+@authentication_classes(BasicAuthentication)
 @permission_classes([IsAuthenticated])
 def remove_from_cart(request, product_id):
     cart = Cart(request)
 
-    product = get_object_or_404(Product, id=product_id)
+    product = geet_Product_object(pk=product_id)
     cart.remove(product)
     return Response(status=HTTP_200_OK)
 
 
 @api_view(['POST'])
+@authentication_classes(BasicAuthentication)
 @permission_classes([IsAuthenticated])
 def clear_cart(request):
     cart = Cart(request)

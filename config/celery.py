@@ -5,10 +5,9 @@ from celery import Celery
 DJANGO_SETTINGS_MODULE = 'config.settings'
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', DJANGO_SETTINGS_MODULE)
 # Create a Celery application
-# app = Celery('config')
 
 
-app = Celery('config', backend='rpc://', broker='amqp://guest:guest@rabbit:5672//')
+app = Celery('config', backend='redis://localhost:6379', broker='redis://localhost:6379')
 
 # Load task modules from all registered Django app configs
 app.autodiscover_tasks()

@@ -9,7 +9,6 @@ from django.utils.translation import gettext as _
 from products.models import Product
 
 
-
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -18,6 +17,7 @@ from django.conf import settings
 def add__(x, y):
     print('\n"-_-"' * 20, x+y, '\n"-_-"' * 20)
     return
+
 
 def add_(x, y):
     print('\n"-_-"' * 20, x+y, '\n"-_-"' * 20)

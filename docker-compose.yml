@@ -20,12 +20,13 @@ services:
     image: postgres:14
     environment:
       - "POSTGRES_HOST_AUTH_METHOD=trust"
+
+
   broker:
-    hostname: rabbit
-    image: rabbitmq:3.8-management
+    image: redislabs/redismod
+    container_name: redis
     ports:
-      - 15672:15672
-      - 5672:5672
+      - '6379:6379'
     
     
   worker:
@@ -36,10 +37,8 @@ services:
     depends_on:
       - broker
       - db
+
     environment:
-      - CELERY_BROKER_USER=guest
-      - CELERY_BROKER_PASSWORD=guest
       - "DJANGO_SECRET_KEY=${DOCKER_COMPOSE_DJANGO_SECRET_KEY}"
       - "DJANGO_DEBUG=${DOCKER_COMPOSE_DJANGO_DEBUG}"
       - "DJANGO_ZARINPAL_MERCHANT_ID=${DOCKER_COMPOSE_DJANGO_ZARINPAL_MERCHANT_ID}"
-        

@@ -16,11 +16,15 @@ import requests
 import json
 from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.http import HttpResponse
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 
 from cart.tasks import send_order_confirmation_email
 from orders.models import Order
 
+
 @api_view(['POST'])
+@authentication_classes(BasicAuthentication)
 @permission_classes([IsAuthenticated])
 def payment_process_sandbox(request):
     # get order id from session
@@ -63,6 +67,7 @@ def payment_process_sandbox(request):
 
 
 @api_view(['GET'])
+@authentication_classes(BasicAuthentication)
 @permission_classes([IsAuthenticated])
 def payment_callback_sandbox(request):
     payment_authority = request.GET.get("Authority")

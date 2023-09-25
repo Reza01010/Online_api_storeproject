@@ -1,6 +1,30 @@
 from rest_framework import serializers
 from .models import Product, Comment, UserFavorite, Contact_us
 from orders.models import Order,OrderItem
+from django.contrib.auth import get_user_model
+
+
+from rest_framework import serializers
+from cart.models import Cart, CartItem
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ('product', 'quantity', )
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+    total_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cart
+        fields = ('user', 'created_at', 'updated_at', 'items', 'total_price')
+
+    def get_total_price(self, obj):
+        return sum(item.get_total_price() for item in obj.items.all())
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,6 +56,9 @@ class MyAccountSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     username = serializers.CharField(required=False)
 
+    class Meta:
+        model = get_user_model()
+        fields = ['first_name', 'last_name', 'email', 'username']
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
