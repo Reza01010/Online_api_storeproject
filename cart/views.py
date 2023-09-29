@@ -24,8 +24,9 @@ def geet_Product_object(pk):
 @permission_classes([IsAuthenticated])
 def cart_detail_view(request):
     if request.method == 'GET':
-        cart = CartSerializer(Cart(request))
-        return Response({'cart': cart}, status=HTTP_200_OK)
+        cart = CartSerializer(Cart_.objects.get(user=request.user.id))
+
+        return Response({'cart': cart.data}, status=HTTP_200_OK)
 
     elif request.method == 'POST':
         serializes = CartSerializer(data=request.data)
@@ -40,6 +41,10 @@ def cart_detail_view(request):
         else:
             return Response(serializes.errors, status=HTTP_400_BAD_REQUEST)
     return Response(status=HTTP_400_BAD_REQUEST)
+
+
+
+
 
 
 # @api_view(['POST'])

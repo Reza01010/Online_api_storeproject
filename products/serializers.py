@@ -56,8 +56,13 @@ class CartSerializer(serializers.ModelSerializer):
     def get_total_price(self, obj):
         # Calculate the total price of the cart
         total_price = 0
-        for item in obj['items']:
-            total_price += item['product'].price * item['quantity']
+
+        try:
+            for item in obj.items.all():
+                total_price += item.product.price * item.quantity
+        except:
+            for item in obj['items']:
+                total_price += item['product'].price * item['quantity']
         return total_price
 
 
