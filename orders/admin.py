@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib import admin
 
 from django.contrib import admin
-from jalali_date.admin import ModelAdminJalaliMixin
+# from jalali_date.admin import ModelAdminJalaliMixin
 
 from .models import Order, OrderItem
 
@@ -16,7 +16,7 @@ class CommentsInline(admin.StackedInline):
 
 # admin.site.register(Order)
 @admin.register(Order)
-class ProductAdmin(ModelAdminJalaliMixin, admin.ModelAdmin):
+class ProductAdmin(admin.ModelAdmin):
     list_display = ['user', 'is_paid',
                     'first_name', 'last_name', 'phone_number', 'address', 'order_notes', 'datetime_created']
 

@@ -7,7 +7,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', DJANGO_SETTINGS_MODULE)
 # Create a Celery application
 
 
-app = Celery('config', backend='redis://localhost:6379', broker='redis://localhost:6379')
+app = Celery('config', backend='redis://redis:6379/0', broker='redis://redis:6379/0')
 
 # Load task modules from all registered Django app configs
 app.autodiscover_tasks()

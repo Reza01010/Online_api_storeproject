@@ -9,6 +9,7 @@ from .serializers import (
     ContactUsSerializer,
     MyAccountSerializer,
     OrderSerializer_e,
+    ProductSerializer_d,
 )
 from rest_framework import status
 from django.shortcuts import get_object_or_404
@@ -49,7 +50,7 @@ class ProductListView(generics.ListAPIView):
 class ProductDetailView(generics.RetrieveAPIView):
     authentication_classes = [BasicAuthentication]
     queryset = Product.objects.filter(active=True)
-    serializer_class = ProductSerializer
+    serializer_class = ProductSerializer_d
     permission_classes = [IsAuthenticated]
     http_method_names = ["get"]
 

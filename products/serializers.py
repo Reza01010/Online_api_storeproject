@@ -8,22 +8,57 @@ from rest_framework import serializers
 from cart.models import Cart, CartItem
 
 
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('id', 'username', )
+
+
 class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ('product', 'quantity', )
 
 
+# class CartSerializer(serializers.ModelSerializer):
+#     items = CartItemSerializer(many=True)
+#     total_price = serializers.SerializerMethodField()
+#     user = UserSerializer(read_only=True)
+#
+#     class Meta:
+#         model = Cart
+#         fields = ('user', 'created_at', 'updated_at', 'items', 'total_price')
+#
+#     def create(self, validated_data):
+#         items_data = validated_data.pop('items')
+#         cart = Cart.objects.create(**validated_data)
+#         for item_data in items_data:
+#             CartItem.objects.create(cart=cart, **item_data)
+#         return cart
+
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
+    items = CartItemSerializer(many=True)
     total_price = serializers.SerializerMethodField()
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Cart
         fields = ('user', 'created_at', 'updated_at', 'items', 'total_price')
 
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        cart = Cart.objects.create(**validated_data)
+        for item_data in items_data:
+            CartItem.objects.create(cart=cart, **item_data)
+        return cart
+
     def get_total_price(self, obj):
-        return sum(item.get_total_price() for item in obj.items.all())
+        # Calculate the total price of the cart
+        total_price = 0
+        for item in obj.items.all():
+            total_price += item.product.price * item.quantity
+        return total_price
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -35,6 +70,14 @@ class ProductSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
+        fields = '__all__'
+
+
+class ProductSerializer_d(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
         fields = '__all__'
 
 

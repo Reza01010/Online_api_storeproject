@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib import admin
 
 from django.contrib import admin
-from jalali_date.admin import ModelAdminJalaliMixin
+# from jalali_date.admin import ModelAdminJalaliMixin
 
 from .models import Product, Comment
 
@@ -16,7 +16,7 @@ class CommentsInline(admin.StackedInline):
 
 # admin.site.register(Product)
 @admin.register(Product)
-class ProductAdmin(ModelAdminJalaliMixin, admin.ModelAdmin):
+class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'price',
                     'datetime_created', 'active',]
 
