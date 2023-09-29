@@ -6,7 +6,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NO
 from rest_framework import generics, permissions
 from products.serializers import CartSerializer, CartItemSerializer
 from .cart import Cart
-from .models import Cart as Cart_
+from .models import Cart as Cart_,CartItem
 from products.models import Product
 from .forms import AddToCartProductForm
 from rest_framework import status
@@ -74,7 +74,23 @@ class AddToCartView(generics.CreateAPIView):
     http_method_names = ['post']
 
     def perform_create(self, serializer):
-        serializer.save(user_id=self.request.user.id)
+        user = self.request.user
+
+        try:
+            cart = Cart_.objects.get(user=user)
+
+            cart_items = serializer.validated_data.get('items', [])
+            for item in cart_items:
+                product = item['product']
+                quantity = item['quantity']
+                try:
+                    cart_item = CartItem.objects.get(cart=cart, product=product)
+                    cart_item.quantity += quantity
+                    cart_item.save()
+                except CartItem.DoesNotExist:
+                    CartItem.objects.create(cart=cart, product=product, quantity=quantity)
+        except Cart_.DoesNotExist:
+            serializer.save(user=user)
 
 
 @api_view(['POST'])
