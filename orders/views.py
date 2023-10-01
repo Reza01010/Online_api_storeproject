@@ -21,29 +21,51 @@ class OrderCreateView(APIView):
     def post(self, request):
         data = request.data
         print(data, "HRTRfg4444444444444444444444444444"*5)
-        # data_ = OrderSerializer_e_t(data=data)
         try:
             cart = Cart.objects.get(user=request.user.id)
             cart_item = CartItem.objects.filter(cart=cart)
+            data["items"] = [] 
+            print(data, "eAFDSGthry4wted++++++"*100)
 
-            item = OrderItemSerializer(cart_item, many=True)
 
-            order = OrderSerializer_e_t(data=data)
-            print(":"*20)
-            if order.is_valid():
-                order.user = request.user.id
-                order.is_paid = False
-                order.save()
+            for item in cart_item:
+                item_data = {
+                    "product": item.product.id,
+                    "quantity": item.quantity,
+                    "price": item.get_total_price()
+                }
+                print("@@@@@@@@@@@@@@@@@@@@"*10,"  > ", item_data)
+                data["items"].append(item_data)
 
-            print("---_"*90)
-            
-            if item.is_valid():
+
+
+            order_form = OrderSerializer_e(data=data)
+            print(order_form, "WWWWWWWWWW"*50)
+            if order_form.is_valid():
                 print("&"*200)
-                order_obj = item.save(commit=False)
+                order = order_form.validated_data
+                print("$" * 200)
+                order_obj = Order.objects.create(
+        user=request.user,
+        is_paid=False,
+        first_name=order['first_name'],
+        last_name=order['last_name'],
+        phone_number=order['phone_number'],
+        address=order['address'],
+        order_notes=order['order_notes'],
+    )
                 print("#" * 200)
-                order_obj.save()
-                print("@" * 200)
+                for item in cart_item:
+                    OrderItem.objects.create(
+            order=order_obj,
+            product=item.product,
+            quantity=item.quantity,
+            price=item.get_total_price(),
+        )
+                print("@" * 2000)
                 return Response(status=status.HTTP_200_OK)
+            else:
+                print(order_form.errors, "^^"*50,order_form.error_messages,"^^"*50)
         except:
             if len(cart) == 0:
                 return Response({'message': 'You cannot proceed to checkout page because your cart is empty.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -56,7 +78,7 @@ class OrderCreateView(APIView):
             request.session['order_id'] = order_obj.id
             return redirect('payment:payment_process_sandbox')
         else:
-            return Response(item.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(order_form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
