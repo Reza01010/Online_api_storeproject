@@ -76,13 +76,6 @@ class OrderCreateView(APIView):
 
 
 
-
-
-
-
-
-
-
 class OrderUnpaidView(APIView):
     authentication_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
@@ -90,10 +83,12 @@ class OrderUnpaidView(APIView):
 
     def get(self, request):
         user = request.user
-        o = Order.get_number_of_paid_orders(user=user)
+        o = Order()
+        obj_ = o.get_number_of_paid_orders(user=user)
+        obj=OrderSerializer_e(obj_, many=True)
         if not o:
             return Response({'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
-        return Response({'order_unpaid_id': o}, status=status.HTTP_200_OK)
+        return Response({'order_unpaid_id': obj.data}, status=status.HTTP_200_OK)
 
 
 class OrderDeleteView(APIView):
@@ -110,7 +105,7 @@ class OrderDeleteView(APIView):
     def delete(self, request, pk):
         order = self.geet_object(pk)
         order.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_202_NO_CONTENT)
 
 
 class OrderContinueView(APIView):
@@ -127,4 +122,4 @@ class OrderContinueView(APIView):
     def post(self, request, pk):
         order = self.geet_object(pk)
         request.session['order_id'] = pk
-        return Response(status=status.HTTP_200_OK)
+        return redirect('payment:payment_process_sandbox')
