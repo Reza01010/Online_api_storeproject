@@ -20,12 +20,10 @@ class OrderCreateView(APIView):
 
     def post(self, request):
         data = request.data
-        print(data, "HRTRfg4444444444444444444444444444"*5)
         try:
             cart = Cart.objects.get(user=request.user.id)
             cart_item = CartItem.objects.filter(cart=cart)
             data["items"] = [] 
-            print(data, "eAFDSGthry4wted++++++"*100)
 
 
             for item in cart_item:
@@ -34,17 +32,13 @@ class OrderCreateView(APIView):
                     "quantity": item.quantity,
                     "price": item.get_total_price()
                 }
-                print("@@@@@@@@@@@@@@@@@@@@"*10,"  > ", item_data)
                 data["items"].append(item_data)
 
 
 
             order_form = OrderSerializer_e(data=data)
-            print(order_form, "WWWWWWWWWW"*50)
             if order_form.is_valid():
-                print("&"*200)
                 order = order_form.validated_data
-                print("$" * 200)
                 order_obj = Order.objects.create(
         user=request.user,
         is_paid=False,
@@ -54,7 +48,6 @@ class OrderCreateView(APIView):
         address=order['address'],
         order_notes=order['order_notes'],
     )
-                print("#" * 200)
                 for item in cart_item:
                     OrderItem.objects.create(
             order=order_obj,
@@ -62,23 +55,26 @@ class OrderCreateView(APIView):
             quantity=item.quantity,
             price=item.get_total_price(),
         )
-                print("@" * 2000)
-                return Response(status=status.HTTP_200_OK)
+                
             else:
-                print(order_form.errors, "^^"*50,order_form.error_messages,"^^"*50)
+                return Response({'serializer_errors':order_form.errors, "serializer_error_messages":order_form.error_messages},status=status.HTTP_400_BAD_REQUEST)
         except:
-            if len(cart) == 0:
+            cart = Cart.objects.get(user=request.user.id)
+            cart_item = CartItem.objects.filter(cart=cart)
+            if not cart:
+                return Response({'message': 'You cannot proceed to the checkout page because you do not have a shopping cart'}, status=status.HTTP_400_BAD_REQUEST)
+            elif not cart_item:
                 return Response({'message': 'You cannot proceed to checkout page because your cart is empty.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if not request.user.first_name:
-                request.user.first_name = order_obj.first_name
-            if not request.user.last_name:
-                request.user.last_name = order_obj.last_name
-            request.user.save()
-            request.session['order_id'] = order_obj.id
-            return redirect('payment:payment_process_sandbox')
-        else:
-            return Response(order_form.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not request.user.first_name:
+            request.user.first_name = order_obj.first_name
+        if not request.user.last_name:
+            request.user.last_name = order_obj.last_name
+        request.user.save()
+        request.session['order_id'] = order_obj.id
+        return redirect('payment:payment_process_sandbox')
+
+
 
 
 
