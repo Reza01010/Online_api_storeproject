@@ -8,6 +8,11 @@ from rest_framework import serializers
 from cart.models import Cart, CartItem
 
 
+class RemoveAllSerializer(serializers.Serializer):
+    product_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
+    remove_all = serializers.BooleanField(required=False)
+
+
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -119,4 +124,10 @@ class OrderSerializer_e(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        exclude = ['zarinpal_authority', 'zarinpal_ref_id', 'zarinpal_data']
+        exclude = ['user', 'is_paid', 'zarinpal_authority', 'zarinpal_ref_id', 'zarinpal_data']
+
+
+class OrderSerializer_e_t(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        exclude = ['user', 'is_paid', 'zarinpal_authority', 'zarinpal_ref_id', 'zarinpal_data']

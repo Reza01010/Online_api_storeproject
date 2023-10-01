@@ -5,9 +5,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Order
 from django.shortcuts import get_object_or_404
-from products.serializers import OrderSerializer_e
-from cart.cart import Cart
+from products.serializers import OrderSerializer_e,OrderSerializer_e_t, OrderItemSerializer
 from orders.models import OrderItem
+from cart.models import Cart, CartItem
 from django.shortcuts import render, redirect
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import BasicAuthentication
@@ -19,23 +19,35 @@ class OrderCreateView(APIView):
     http_method_names = ["post"]
 
     def post(self, request):
-        cart = Cart(request)
-        if len(cart) == 0:
-            return Response({'message': 'You cannot proceed to checkout page because your cart is empty.'}, status=status.HTTP_400_BAD_REQUEST)
-        order_form = OrderSerializer_e(data=request.data)
-        if order_form.is_valid():
-            order_obj = order_form.save(commit=False)
-            order_obj.user = request.user
-            order_obj.save()
-            for item in cart:
-                product = item['product_obj']
-                OrderItem.objects.create(
-                    order=order_obj,
-                    product=product,
-                    quantity=item['quantity'],
-                    price=product.price
-                )
-            cart.clear()
+        data = request.data
+        print(data, "HRTRfg4444444444444444444444444444"*5)
+        # data_ = OrderSerializer_e_t(data=data)
+        try:
+            cart = Cart.objects.get(user=request.user.id)
+            cart_item = CartItem.objects.filter(cart=cart)
+
+            item = OrderItemSerializer(cart_item, many=True)
+
+            order = OrderSerializer_e_t(data=data)
+            print(":"*20)
+            if order.is_valid():
+                order.user = request.user.id
+                order.is_paid = False
+                order.save()
+
+            print("---_"*90)
+            
+            if item.is_valid():
+                print("&"*200)
+                order_obj = item.save(commit=False)
+                print("#" * 200)
+                order_obj.save()
+                print("@" * 200)
+                return Response(status=status.HTTP_200_OK)
+        except:
+            if len(cart) == 0:
+                return Response({'message': 'You cannot proceed to checkout page because your cart is empty.'}, status=status.HTTP_400_BAD_REQUEST)
+
             if not request.user.first_name:
                 request.user.first_name = order_obj.first_name
             if not request.user.last_name:
@@ -44,7 +56,13 @@ class OrderCreateView(APIView):
             request.session['order_id'] = order_obj.id
             return redirect('payment:payment_process_sandbox')
         else:
-            return Response(order_form.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(item.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 
 class OrderUnpaidView(APIView):
