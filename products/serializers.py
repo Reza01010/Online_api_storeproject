@@ -80,7 +80,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = '__all__'
+        exclude = ['author', 'active']
 
 
 class ProductSerializer_d(serializers.ModelSerializer):
@@ -100,7 +100,7 @@ class UserFavoriteSerializer(serializers.ModelSerializer):
 class ContactUsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact_us
-        fields = '__all__'
+        exclude = ['user', ]
 
 
 class MyAccountSerializer(serializers.Serializer):

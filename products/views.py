@@ -27,6 +27,9 @@ from django.http import JsonResponse
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import BasicAuthentication
+from rest_framework.views import APIView
+import json
+
 
 
 class SearchView(generics.ListAPIView):
@@ -55,16 +58,53 @@ class ProductDetailView(generics.RetrieveAPIView):
     http_method_names = ["get"]
 
 
-class CommentCreateView(generics.CreateAPIView):
+class CommentCreateView(APIView):
     authentication_classes = [BasicAuthentication]
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["post"]
 
 
+    def post(self, request, pk):
+        data = request.data
+        try:
+            print("%"*100)
+            product = Product.objects.get(id=int(pk))
+            print("$"*100)
+            coment_ser = CommentSerializer(data=data)
+            if coment_ser.is_valid():
+                coment = coment_ser.validated_data
+                if not coment['product'] == product:
+                    return Response({'note': 'The id to which you sent that address must match the id of the product that is in the post data'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                comment_ = Comment.objects.create(
+                    author=request.user,
+                    active=True,
+                    product=coment['product'],
+                    body=coment['body'],
+                    starts=coment['starts'],
+                )
+
+                coment__ = CommentSerializer(comment_)
+
+                return Response({'comment':coment__.data},status=status.HTTP_200_OK)
+                
+            else:
+                return Response({'serializer_errors':coment_ser.errors, "serializer_error_messages":coment_ser.error_messages},status=status.HTTP_400_BAD_REQUEST)
+        except:
+            
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
 class FavoritesView(generics.ListAPIView):
     authentication_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     serializer_class = UserFavoriteSerializer
     http_method_names = ["get"]
 
@@ -72,10 +112,12 @@ class FavoritesView(generics.ListAPIView):
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return self.request.user.favorites.all()
-        else:
-            favorites = self.request.session.get('favorites', {})
-            pk_ = [int(key) for key in favorites if re.match(r'\d+', key)]
-            return Product.objects.filter(id__in=pk_)
+        # else:
+        #     favorites = self.request.session.get('favorites', {})
+        #     pk_ = [int(key) for key in favorites if re.match(r'\d+', key)]
+        #     return Product.objects.filter(id__in=pk_)
+
+
 
 def geet_Product_object(pk):
     try:
@@ -85,7 +127,7 @@ def geet_Product_object(pk):
 
 
 @api_view(['GET'])
-@authentication_classes(BasicAuthentication)
+@authentication_classes([BasicAuthentication])
 @permission_classes([IsAuthenticated])
 def favorite_add_view(request, pk):
     if request.user.is_authenticated:
@@ -100,19 +142,20 @@ def favorite_add_view(request, pk):
             return Response({'message': 'Favorite added successfully.'}, status=status.HTTP_200_OK)
         else:
             return Response({'message': 'Product already in favorites.'}, status=status.HTTP_200_OK)
-    else:
-        favorites = request.session.get('favorites', {})
-        if pk not in favorites:
-            product = Product.objects.get(pk=pk)
-            favorites[pk] = product.title
-            request.session['favorites'] = favorites
-            return Response({'message': 'Favorite added successfully.'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': 'Product already in favorites.'}, status=status.HTTP_200_OK)
+    # else:
+    #     favorites = request.session.get('favorites', {})
+    #     if pk not in favorites:
+    #         product = Product.objects.get(pk=pk)
+    #         favorites[pk] = product.title
+    #         request.session['favorites'] = favorites
+    #         return Response({'message': 'Favorite added successfully.'}, status=status.HTTP_200_OK)
+    #     else:
+    #         return Response({'message': 'Product already in favorites.'}, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])
-@authentication_classes(BasicAuthentication)
+@authentication_classes([BasicAuthentication])
 @permission_classes([IsAuthenticated])
 def contact_us_view(request):
     last_comment = Contact_us.objects.filter(user=request.user).order_by('-created').first()
@@ -127,10 +170,20 @@ def contact_us_view(request):
 
     if last_comment and 0 <= ti:
         return Response({'message': "You can only comment every {} hours".format(t)}, status=status.HTTP_408_REQUEST_TIMEOUT)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         serializer = ContactUsSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            serializer_ = serializer.validated_data
+            Contact_us.objects.create(
+                user=request.user,
+                mesej=serializer_['mesej'],
+                phone_number=serializer_['phone_number'],
+                email=serializer_['email'],
+                name=serializer_['name'],
+
+            )
+
+
             return Response({'message': 'OK'})
 
         e = None
@@ -140,34 +193,53 @@ def contact_us_view(request):
 
 
 @api_view(['POST','GET'])
-@authentication_classes(BasicAuthentication)
+@authentication_classes([BasicAuthentication])
 @permission_classes([IsAuthenticated])
 def my_account_view(request):
 
     if request.method == 'POST':
+        print("&"*100, request.data)
         acco_form = MyAccountSerializer(data=request.data)
+        
         if acco_form.is_valid():
             acco_formv = acco_form.validated_data
-            if not request.user.first_name and acco_formv.get('firstname'):
-                request.user.first_name = acco_formv['firstname']
-            if not request.user.last_name and acco_formv.get('lastname'):
-                request.user.last_name = acco_formv['lastname']
+            list = []
+            print("$-"*100, acco_formv)
+            if not request.user.first_name and acco_formv.get('first_name'):
+                print(">>>>"*50, '  ',request.user.first_name)
+                request.user.first_name = acco_formv['first_name']
+            else:
+                list.append('first_name')
+            if not request.user.last_name and acco_formv.get('last_name'):
+                print(">>>>"*50, '  ',request.user.last_name)
+                request.user.last_name = acco_formv['last_name']
+            else:
+                list.append('last_name')
             if not request.user.email and acco_formv.get('email'):
+                print(">>>>"*50, '  ',request.user.email)
                 request.user.email = acco_formv['email']
+            else:
+                list.append('email')
             if not request.user.username and acco_formv.get('username'):
+                print(">>>>"*50, '  ',request.user.username)
                 request.user.username = acco_formv['username']
+            else:
+                list.append('username')
             request.user.save()
+            print("#"*200)
+            if list.__len__() != 0:
+                return Response({"my_account":{},"note": f"These fields are already filled  ==> [{list}] " }, status=status.HTTP_200_OK)
             return Response(acco_form.data, status=status.HTTP_200_OK)
         return Response(acco_form.errors, status=status.HTTP_400_BAD_REQUEST)
     if request.method == 'GET':
         favorite_ = request.user.favorites.all()
-        serializerfa = serializers.serialize('json', favorite_)
-        serialized_data_fa = serializerfa.data
+        serializerfa = [{'id': f.id, 'name': f.title} for f in favorite_]
+        serialized_data_fa = serializerfa
         o = Order.objects.filter(user=request.user)
-        serializero = OrderSerializer_e(o)
+        serializero = OrderSerializer_e(o, many=True)
         serialized_data_o = serializero.data
         serializer_myaccount = MyAccountSerializer(request.user)
-    return JsonResponse({'listfe': serialized_data_fa, 'order':serialized_data_o, 'myaccount': serializer_myaccount}, safe=False, status=status.HTTP_200_OK)
+    return JsonResponse({'listfe': serialized_data_fa, 'order':serialized_data_o, 'myaccount': serializer_myaccount.data}, safe=False, status=status.HTTP_200_OK)
 
 
 

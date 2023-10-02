@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Order
 from django.shortcuts import get_object_or_404
-from products.serializers import OrderSerializer_e,OrderSerializer_e_t, OrderItemSerializer
+from products.serializers import OrderSerializer_e
 from orders.models import OrderItem
 from cart.models import Cart, CartItem
 from django.shortcuts import render, redirect

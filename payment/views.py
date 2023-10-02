@@ -44,7 +44,6 @@ def payment_process_sandbox(request):
         "accept": "application/json",
         "content-type": "application/json"
     }
-    print("7"*50)
     request_data = {
         'MerchantID': 'dddddddddddddddddddddddddddddddddddd',
         'Amount': rial_total_price,
@@ -122,9 +121,5 @@ def payment_callback_sandbox(request):
 
 
 
-#    انگار یک مشکل داره  یا  زرین پال در سندباکس کوتاهی می کنه  من چند بار یک سفارش رو پداخت کردم هر دفه هم فقط          پرداخت با موفقیت انجام شد       رو نوشت
 
-
-
-#  و انگار سلری کار نمی کنه و ایمیل های پرداخت شد و نشد ارسال نمیشه در خط های    116و 107
 

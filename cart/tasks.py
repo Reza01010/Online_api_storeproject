@@ -30,4 +30,4 @@ def send_order_confirmation_email(email,text):
     message = text
     from_email = 'your_email@example.com'
     to_email = [str(email)]
-    send_mail(subject, message, from_email, to_email)
+    return send_mail(subject, message, from_email, to_email)
