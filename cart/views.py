@@ -42,7 +42,8 @@ def cart_detail_view(request):
                     cart_item = CartItem.objects.get(cart=cart, product=product)
                     cart_item.quantity = quantity
                     cart_item.save()
-                except CartItem.DoesNotExist:
+                # except CartItem.DoesNotExist:
+                except:
                     cart_item = CartItem.objects.create(cart=cart, product=product, quantity=quantity)
                     cart_item.save()
 
@@ -84,7 +85,6 @@ def cart_detail_view(request):
             return Response({'cart': cart.data}, status=HTTP_200_OK)
         else:
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
     return Response(status=HTTP_400_BAD_REQUEST)
 
 

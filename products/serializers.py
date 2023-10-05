@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Product, Comment, UserFavorite, Contact_us
 from orders.models import Order,OrderItem
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 
 
 from rest_framework import serializers
@@ -65,7 +66,7 @@ class CartSerializer(serializers.ModelSerializer):
         try:
             for item in obj.items.all():
                 total_price += item.product.price * item.quantity
-        except:
+        except AttributeError:
             for item in obj['items']:
                 total_price += item['product'].price * item['quantity']
         return total_price
