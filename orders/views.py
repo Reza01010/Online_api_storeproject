@@ -86,7 +86,7 @@ class OrderUnpaidView(APIView):
         o = Order()
         obj_ = o.get_number_of_paid_orders(user=user)
         obj=OrderSerializer_e(obj_, many=True)
-        if not o:
+        if not obj_:
             return Response({'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
         return Response({'order_unpaid_id': obj.data}, status=status.HTTP_200_OK)
 
@@ -96,16 +96,13 @@ class OrderDeleteView(APIView):
     permission_classes = [IsAuthenticated]
     http_method_names = ["delete"]
 
-    def geet_object(self, pk):
-        try:
-            return Order.objects.get(pk=pk)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
     def delete(self, request, pk):
-        order = self.geet_object(pk)
-        order.delete()
-        return Response(status=status.HTTP_202_NO_CONTENT)
+        try:
+            order = Order.objects.get(pk=pk)
+            order.delete()
+            return Response(status=status.HTTP_202_ACCEPTED)
+        except Order.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class OrderContinueView(APIView):
@@ -113,13 +110,11 @@ class OrderContinueView(APIView):
     permission_classes = [IsAuthenticated]
     http_method_names = ["post"]
 
-    def geet_object(self, pk):
-        try:
-            return Order.objects.get(pk=pk)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
+    
     def post(self, request, pk):
-        order = self.geet_object(pk)
-        request.session['order_id'] = pk
-        return redirect('payment:payment_process_sandbox')
+        try:
+            order = Order.objects.get(pk=pk)
+            request.session['order_id'] = order.pk
+            return redirect('payment:payment_process_sandbox')
+        except Order.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
