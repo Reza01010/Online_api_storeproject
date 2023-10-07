@@ -67,9 +67,7 @@ class CommentCreateView(APIView):
     def post(self, request, pk):
         data = request.data
         try:
-            print("%"*100)
             product = Product.objects.get(id=int(pk))
-            print("$"*100)
             coment_ser = CommentSerializer(data=data)
             if coment_ser.is_valid():
                 coment = coment_ser.validated_data
@@ -119,11 +117,6 @@ class FavoritesView(generics.ListAPIView):
 
 
 
-def geet_Product_object(pk):
-    try:
-        return Product.objects.get(pk=pk)
-    except:
-        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['GET'])
@@ -131,7 +124,12 @@ def geet_Product_object(pk):
 @permission_classes([IsAuthenticated])
 def favorite_add_view(request, pk):
     if request.user.is_authenticated:
-        favorite_ = geet_Product_object(pk=pk)
+        try:
+            obj = Product.objects.get(pk=pk)
+            favorite_=obj
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         if not UserFavorite.objects.filter(
             user=request.user,
             product=favorite_
@@ -198,39 +196,47 @@ def contact_us_view(request):
 def my_account_view(request):
 
     if request.method == 'POST':
-        print("&"*100, request.data)
         acco_form = MyAccountSerializer(data=request.data)
         
         if acco_form.is_valid():
             acco_formv = acco_form.validated_data
             list = []
-            print("$-"*100, acco_formv)
+            list_n= []
             if not request.user.first_name and acco_formv.get('first_name'):
-                print(">>>>"*50, '  ',request.user.first_name)
                 request.user.first_name = acco_formv['first_name']
-            else:
+            elif acco_formv.get('first_name'):
                 list.append('first_name')
+            elif not request.user.first_name:
+                list_n.append('first_name')
             if not request.user.last_name and acco_formv.get('last_name'):
-                print(">>>>"*50, '  ',request.user.last_name)
                 request.user.last_name = acco_formv['last_name']
-            else:
+            elif acco_formv.get('last_name'):
                 list.append('last_name')
+            elif not request.user.last_name:
+                list_n.append('last_name')
             if not request.user.email and acco_formv.get('email'):
-                print(">>>>"*50, '  ',request.user.email)
                 request.user.email = acco_formv['email']
-            else:
+            elif acco_formv.get('email'):
                 list.append('email')
+            elif not request.user.email:
+                list_n.append('email')
             if not request.user.username and acco_formv.get('username'):
-                print(">>>>"*50, '  ',request.user.username)
                 request.user.username = acco_formv['username']
-            else:
+            elif acco_formv.get('username'):
                 list.append('username')
+            elif not request.user.username:
+                list_n.append('username')
             request.user.save()
-            print("#"*200)
-            if list.__len__() != 0:
-                return Response({"my_account":{},"note": f"These fields are already filled  ==> [{list}] " }, status=status.HTTP_200_OK)
+
+            serializer_myaccount = MyAccountSerializer(request.user)
+            if list_n.__len__() > 0 and list.__len__() > 0:
+                return Response({"my_account": dict(serializer_myaccount.data), "note1": f"These fields are already filled  ==> [{list}] ", "note2": f"These fields are empty  ==> [{list_n}] "}, status=status.HTTP_200_OK)
+            if list.__len__() > 0:
+                return Response({"my_account": dict(serializer_myaccount.data), "note": f"These fields are already filled  ==> [{list}] "}, status=status.HTTP_200_OK)
+            if list_n.__len__() > 0:
+                return Response({"my_account": dict(serializer_myaccount.data),  "note": f"These fields are empty  ==> [{list_n}] "}, status=status.HTTP_200_OK)
             return Response(acco_form.data, status=status.HTTP_200_OK)
-        return Response(acco_form.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error':acco_form.errors}, status=status.HTTP_400_BAD_REQUEST)
     if request.method == 'GET':
         favorite_ = request.user.favorites.all()
         serializerfa = [{'id': f.id, 'name': f.title} for f in favorite_]
@@ -239,7 +245,7 @@ def my_account_view(request):
         serializero = OrderSerializer_e(o, many=True)
         serialized_data_o = serializero.data
         serializer_myaccount = MyAccountSerializer(request.user)
-    return JsonResponse({'listfe': serialized_data_fa, 'order':serialized_data_o, 'myaccount': serializer_myaccount.data}, safe=False, status=status.HTTP_200_OK)
+        return Response({'listfe': serialized_data_fa, 'order':serialized_data_o, 'myaccount': serializer_myaccount.data}, status=status.HTTP_200_OK)
 
 
 
