@@ -241,7 +241,7 @@ def my_account_view(request):
         favorite_ = request.user.favorites.all()
         serializerfa = [{'id': f.id, 'name': f.title} for f in favorite_]
         serialized_data_fa = serializerfa
-        o = Order.objects.filter(user=request.user)
+        o = Order.objects.prefetch_related('items').filter(user=request.user)
         serializero = OrderSerializer_e(o, many=True)
         serialized_data_o = serializero.data
         serializer_myaccount = MyAccountSerializer(request.user)

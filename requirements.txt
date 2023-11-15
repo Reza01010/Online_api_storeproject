@@ -22,6 +22,7 @@ django-bleach==3.0.1
 django-cache-url==3.4.4
 django-ckeditor==6.5.1
 django-crispy-forms==2.0
+django-debug-toolbar==4.2.0
 django-editorjs==0.2.1
 django-environ==0.11.2
 django-js-asset==2.0.0

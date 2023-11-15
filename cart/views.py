@@ -24,7 +24,7 @@ def geet_Product_object(pk):
 @permission_classes([IsAuthenticated])
 def cart_detail_view(request):
     if request.method == 'GET':
-        cart = CartSerializer(Cart_.objects.get(user=request.user.id))
+        cart = CartSerializer(Cart_.objects.prefetch_related('items__product').get(user=request.user.id))
 
         return Response({'cart': cart.data}, status=HTTP_200_OK)
 

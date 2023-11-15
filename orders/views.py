@@ -22,7 +22,7 @@ class OrderCreateView(APIView):
         data = request.data
         try:
             cart = Cart.objects.get(user=request.user.id)
-            cart_item = CartItem.objects.filter(cart=cart)
+            cart_item = CartItem.objects.select_related('product').filter(cart=cart)
             data["items"] = [] 
 
 

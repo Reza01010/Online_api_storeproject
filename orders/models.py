@@ -31,7 +31,7 @@ class Order(models.Model):
     def get_total_price(self):
         return sum(item.quantity * item.price for item in self.items.all())
     def get_number_of_paid_orders(self, user):
-        return Order.objects.filter(is_paid=False, user=user)
+        return Order.objects.prefetch_related('items').filter(is_paid=False, user=user)
 
 # for coocki
 class OrderItem(models.Model):
